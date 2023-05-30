@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"net/http"
 	"io/ioutil"
@@ -9,26 +10,31 @@ import (
 
 func main() {
 	// Specify the URL you want to send the request to
-	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/transfer"
+	url := "http://127.0.0.1:3000/data"
+	ratSelector := flag.String("RAT", "", "enumeration to choose between E-UTRA (4G) and NG (5G)")
+	tac := flag.String("TAC", "", "Tracking area code")
+	mnc := flag.String("MNC", "", "Mobile Network Code")
+	mcc := flag.String("MCC", "", "Mobile Country Code")
+	flag.Parse()
 
 	// Create the request body
 	jsonString := []byte(`{
 		"taiList": [
 		  {
-			"tac": "tac",
+			"tac": "` + *tac + `",
 			"plmnId": {
-			  "mnc": "",
-			  "mcc": ""
+			  "mnc": "` + *mnc + `",
+			  "mcc": "` + *mcc + `"
 			}
 		  }
 		],
-		"ratSelector": "NR",
+		"ratSelector": "` + *ratSelector + `",
 		"ecgiList": [
 		  {
 			"eutraCellId": "",
 			"plmnId": {
-			  "mnc": "",
-			  "mcc": ""
+			  "mnc": "` + *mnc + `",
+			  "mcc": "` + *mcc + `"
 			}
 		  }
 		],
@@ -36,8 +42,8 @@ func main() {
 		  {
 			"nrCellId": "",
 			"plmnId": {
-			  "mnc": "",
-			  "mcc": ""
+			  "mnc": "` + *mnc + `",
+			  "mcc": "` + *mcc + `"
 			}
 		  }
 		],
@@ -48,8 +54,8 @@ func main() {
 			  "gNBValue": ""
 			},
 			"plmnId": {
-				"mnc": "",
-				"mcc": ""
+				"mnc": "` + *mnc + `",
+				"mcc": "` + *mcc + `"
 			},
 			"n3IwfId": "",
 			"ngeNbId": ""
