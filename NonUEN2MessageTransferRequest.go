@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Specify the URL you want to send the request to
-	url := "http://127.0.0.1:3000/data"
+	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/transfer/"
 	ratSelector := flag.String("RAT", "", "enumeration to choose between E-UTRA (4G) and NG (5G)")
 	tac := flag.String("TAC", "", "Tracking area code")
 	mnc := flag.String("MNC", "", "Mobile Network Code")
