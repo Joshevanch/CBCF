@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 )
 
-func main() {
+func subscribe() {
 	// Specify the URL you want to send the request to
 	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/subscriptions"
 
@@ -31,7 +31,7 @@ func main() {
 
 		],
 		"n2InformationClass": "PWS",
-		"n2NotifyCallbackUri": "",
+		"n2NotifyCallbackUri": "127.0.0.1:8080/notify",
 		"nfId": "",
 		"supportedFeatures": ""
 	  }`)

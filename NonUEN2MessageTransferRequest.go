@@ -8,13 +8,14 @@ import (
 	"io/ioutil"
 )
 
-func main() {
+func transfer() {
 	// Specify the URL you want to send the request to
 	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/transfer/"
 	ratSelector := flag.String("RAT", "", "enumeration to choose between E-UTRA (4G) and NG (5G)")
 	tac := flag.String("TAC", "", "Tracking area code")
 	mnc := flag.String("MNC", "", "Mobile Network Code")
 	mcc := flag.String("MCC", "", "Mobile Country Code")
+	n2Info := flag.String("n2info", "PWS", "N2 information class")
 	flag.Parse()
 
 	// Create the request body
@@ -54,22 +55,23 @@ func main() {
 			  "gNBValue": ""
 			},
 			"plmnId": {
-				"mnc": "` + *mnc + `",
-				"mcc": "` + *mcc + `"
+			  "mnc": "` + *mnc + `",
+			  "mcc": "` + *mcc + `"
 			},
 			"n3IwfId": "",
 			"ngeNbId": ""
 		  }
 		],
 		"n2Information": {
-		  "n2InformationClass": "PWS",
+		  "n2InformationClass": "` + *n2Info + `",
 		  "smInfo": {
-			"subjectToHo": true,
+			"subjectToHo": false,
 			"pduSessionId": 29,
 			"n2InfoContent": {
 			  "ngapData": {
 				"contentId": "contentId"
 			  },
+			  "ngapIeType": "",
 			  "ngapMessageType": 32
 			},
 			"sNssai": {
@@ -82,6 +84,7 @@ func main() {
 			  "ngapData": {
 				"contentId": "contentId"
 			  },
+			  "ngapIeType": "",
 			  "ngapMessageType": 32
 			}
 		  },
@@ -91,21 +94,25 @@ func main() {
 			  "n2InfoContent": {
 				"ngapData": {
 				  "contentId": "contentId"
-				}
+				},
+				"ngapIeType": "",
+				"ngapMessageType": 32
 			  }
 			}
 		  },
 		  "pwsInfo": {
-			"messageIdentifier": 600,
-			"serialNumber": 32,
+			"messageIdentifier": 0,
+			"serialNumber": 0,
 			"pwsContainer": {
 			  "n2InfoContent": {
 				"ngapData": {
 				  "contentId": "contentId"
 				},
-				"sendRanResponse": true,
-				"omcId": true
-			  }
+				"ngapIeType": "",
+				"ngapMessageType": 51
+			  },
+			  "sendRanResponse": true,
+			  "omcId": true
 			}
 		  }
 		},
