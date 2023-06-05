@@ -1,0 +1,4 @@
+github.com/free5gc/openapi v1.0.6 h1:ytRjU/YZRI8UhKKyfajXSyGB6s1YDFkJ1weeAGJ8LXw=
+github.com/free5gc/openapi v1.0.6/go.mod h1:iw/N0E+FlX44EEx24IBi2EdZW8v+bkj3ETWPGnlK9DI=
+github.com/golang-jwt/jwt v3.2.1+incompatible h1:73Z+4BJcrTC+KczS6WvTPvRGOp1WmfEP4Q1lOd9Z/+c=
+github.com/golang-jwt/jwt v3.2.1+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=

@@ -11,6 +11,7 @@ func subscribe() {
 	// Specify the URL you want to send the request to
 	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/subscriptions"
 
+
 	// Create the request body
 	jsonString := []byte(`{
 		"globalRanNodeList": [

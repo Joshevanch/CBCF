@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"io/ioutil"
+	"net/http"
 )
 
 func unsubscribe() {
@@ -14,10 +14,10 @@ func unsubscribe() {
 	flag.Parse()
 	url = url + *id
 	req, err := http.NewRequest("DELETE", url, nil)
-    req.Header.Set("X-Custom-Header", "myvalue")
-    req.Header.Set("Content-Type", "application/json")
-    client := &http.Client{}
-    response, err := client.Do(req)
+	req.Header.Set("X-Custom-Header", "myvalue")
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	response, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("Error sending request: %s\n", err)
 		return

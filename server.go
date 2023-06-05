@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
-	"os/exec"
 	"net/http"
 	"io/ioutil"
+	"flag"
 	"fmt"
 )
 
@@ -15,23 +15,28 @@ func main() {
 }
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-	cmd := exec.Command("go", "run", "NonUeN2InfoSubscribe.go")
-	output, err := cmd.Output()
-	
-	if err != nil {
-		log.Fatal(err)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
-	log.Printf("Subscribe output:\n%s", output)
-	w.Write(output)
-
-	cmd = exec.Command("go", "run", "NonUEN2MessageTransferRequest.go")
-	output, err = cmd.Output()
-	
-	if err != nil {
-		log.Fatal(err)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		return
 	}
-	log.Printf("Message Transfer output:\n%s", output)
-	w.Write(output)
+	ratSelector := r.Form.Get("ratSelector")
+	tac := r.Form.Get("tac")
+	mnc := r.Form.Get("mnc")
+	mcc := r.Form.Get("mcc")
+	n2Info := r.Form.Get("n2Info")
+	flag.Parse()
+	m := make(map[string]string)
+	m["ratSelector"] = ratSelector
+	m["tac"] = tac
+	m["mnc"] = mnc
+	m["mcc"] = mcc
+	m["n2Info"] = n2Info
+	subscribe()
+	transfer(m)
 }
 
 func handleNotify(w http.ResponseWriter, r *http.Request) {
