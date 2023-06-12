@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"bytes"
+	"log"
 	"fmt"
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
 	"github.com/free5gc/openapi/models"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func transfer(m map[string]string) {
@@ -125,8 +129,8 @@ func transfer(m map[string]string) {
 	(*message.JsonData.TaiList)[0].PlmnId.Mcc = m["mcc"]
 	(*message.JsonData.TaiList)[0].PlmnId.Mnc = m["mnc"]
 	(*message.JsonData.TaiList)[0].Tac = m["tac"]
-	fmt.Printf("%+v", (*message.JsonData.TaiList)[0].PlmnId)
 	jsonString, err := json.Marshal(message)
+	insertToDatabase(message)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")
@@ -144,4 +148,26 @@ func transfer(m map[string]string) {
 		return
 	}
 	fmt.Println(string(body))
+}
+
+func insertToDatabase(message models.NonUeN2MessageTransferRequest){
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Connected to MongoDB!")
+	collection := client.Database("local").Collection("cbcf")
+	insertResult, err := collection.InsertOne(context.TODO(), message)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Inserted document ID: %v\n", insertResult.InsertedID)
+
 }
