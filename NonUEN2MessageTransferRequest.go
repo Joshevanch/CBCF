@@ -1,14 +1,16 @@
 package main
 
 import (
-	"context"
 	"bytes"
-	"log"
-	"fmt"
-	"net/http"
-	"io/ioutil"
+	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+
 	"github.com/free5gc/openapi/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -120,22 +122,28 @@ func transfer(m map[string]string) {
 		}
 	  }`)
 	json.Unmarshal(jsonString, &message)
-	if (m["ratSelector"] == "NR"){
+	if m["ratSelector"] == "NR" {
 		message.JsonData.RatSelector = models.RatSelector_NR
 	}
-	if (m["ratSelector"] == "E-UTRA"){
+	if m["ratSelector"] == "E-UTRA" {
 		message.JsonData.RatSelector = models.RatSelector_E_UTRA
 	}
 	(*message.JsonData.TaiList)[0].PlmnId.Mcc = m["mcc"]
 	(*message.JsonData.TaiList)[0].PlmnId.Mnc = m["mnc"]
 	(*message.JsonData.TaiList)[0].Tac = m["tac"]
+	(*message.JsonData.EcgiList)[0].PlmnId.Mcc = m["mcc"]
+	(*message.JsonData.EcgiList)[0].PlmnId.Mnc = m["mnc"]
+	(*message.JsonData.NcgiList)[0].PlmnId.Mcc = m["mcc"]
+	(*message.JsonData.NcgiList)[0].PlmnId.Mnc = m["mnc"]
+	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = m["mcc"]
+	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = m["mnc"]
 	jsonString, err := json.Marshal(message)
 	insertToDatabase(message)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
-    req.Header.Set("X-Custom-Header", "myvalue")
-    req.Header.Set("Content-Type", "application/json")
-    client := &http.Client{}
-    response, err := client.Do(req)
+	req.Header.Set("X-Custom-Header", "myvalue")
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	response, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("Error sending request: %s\n", err)
 		return
@@ -150,7 +158,7 @@ func transfer(m map[string]string) {
 	fmt.Println(string(body))
 }
 
-func insertToDatabase(message models.NonUeN2MessageTransferRequest){
+func insertToDatabase(message models.NonUeN2MessageTransferRequest) {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -167,7 +175,12 @@ func insertToDatabase(message models.NonUeN2MessageTransferRequest){
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Printf("Inserted document ID: %v\n", insertResult.InsertedID)
+	sort := options.FindOne().SetSort(bson.D{{"_id", -1}})
+	var result models.NonUeN2MessageTransferRequest
+	err = collection.FindOne(context.TODO(), bson.D{}, sort).Decode(&result)
+	var b []byte
+	b, err = json.Marshal(result) 
+	fmt.Println(string(b))
 
 }
