@@ -24,17 +24,19 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ratSelector := r.Form.Get("ratSelector")
+	id := r.Form.Get("id")
 	tac := r.Form.Get("tac")
 	mnc := r.Form.Get("mnc")
 	mcc := r.Form.Get("mcc")
-	n2Info := r.Form.Get("n2Info")
+	n2Information := r.Form.Get("n2Information")
 	flag.Parse()
 	m := make(map[string]string)
 	m["ratSelector"] = ratSelector
+	m["id"] = id
 	m["tac"] = tac
 	m["mnc"] = mnc
 	m["mcc"] = mcc
-	m["n2Info"] = n2Info
+	m["n2Information"] = n2Information
 	subscribe()
 	transfer(m)
 }

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strconv"
 	"net/http"
-
 	"github.com/free5gc/openapi/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -121,13 +121,15 @@ func transfer(m map[string]string) {
 		  "supportedFeatures": ""
 		}
 	  }`)
-	json.Unmarshal(jsonString, &message)
+	json.Unmarshal(jsonString, &message) 
 	if m["ratSelector"] == "NR" {
 		message.JsonData.RatSelector = models.RatSelector_NR
 	}
 	if m["ratSelector"] == "E-UTRA" {
 		message.JsonData.RatSelector = models.RatSelector_E_UTRA
 	}
+	id, err := strconv.ParseInt(m["id"], 10, 32)
+	(*&message.JsonData.N2Information.PwsInfo.MessageIdentifier) = int32(id)
 	(*message.JsonData.TaiList)[0].PlmnId.Mcc = m["mcc"]
 	(*message.JsonData.TaiList)[0].PlmnId.Mnc = m["mnc"]
 	(*message.JsonData.TaiList)[0].Tac = m["tac"]
@@ -137,7 +139,7 @@ func transfer(m map[string]string) {
 	(*message.JsonData.NcgiList)[0].PlmnId.Mnc = m["mnc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = m["mcc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = m["mnc"]
-	jsonString, err := json.Marshal(message)
+	jsonString, err = json.Marshal(message)
 	insertToDatabase(message)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
 	req.Header.Set("X-Custom-Header", "myvalue")
