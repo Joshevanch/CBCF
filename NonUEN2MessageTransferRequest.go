@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strconv"
 	"net/http"
+	"strconv"
+
 	"github.com/free5gc/openapi/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,6 +19,7 @@ import (
 func transfer(m map[string]string) {
 	// Specify the URL you want to send the request to
 	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/transfer/"
+
 	// Create the request body
 	message := models.NonUeN2MessageTransferRequest{}
 	jsonString := []byte(`{
@@ -121,7 +123,22 @@ func transfer(m map[string]string) {
 		  "supportedFeatures": ""
 		}
 	  }`)
-	json.Unmarshal(jsonString, &message) 
+	BinaryDataN2Information := []byte(`
+	{
+		"messageType": "",
+		"messageIdentifier": "",
+		"serialNumber": "",
+		"warningAreaList": "",
+		"repetitionPeriod": "",
+		"numberOfBroadcast": "",
+		"warningType": "",
+		"warningSecurityInformation": "",
+		"dataCodingScheme": "",
+		"warningMessageContents" : "",
+		"concurrentWarningMessageIndicator": "",
+		"warningAreaCoordinates": ""
+	}`)
+	json.Unmarshal(jsonString, &message)
 	if m["ratSelector"] == "NR" {
 		message.JsonData.RatSelector = models.RatSelector_NR
 	}
@@ -139,11 +156,11 @@ func transfer(m map[string]string) {
 	(*message.JsonData.NcgiList)[0].PlmnId.Mnc = m["mnc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = m["mcc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = m["mnc"]
+	(*&message.BinaryDataN2Information) = BinaryDataN2Information
 	jsonString, err = json.Marshal(message)
 	insertToDatabase(message)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
-	req.Header.Set("X-Custom-Header", "myvalue")
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "multipart/related")
 	client := &http.Client{}
 	response, err := client.Do(req)
 	if err != nil {
@@ -182,7 +199,7 @@ func insertToDatabase(message models.NonUeN2MessageTransferRequest) {
 	var result models.NonUeN2MessageTransferRequest
 	err = collection.FindOne(context.TODO(), bson.D{}, sort).Decode(&result)
 	var b []byte
-	b, err = json.Marshal(result) 
+	b, err = json.Marshal(result)
 	fmt.Println(string(b))
 
 }
