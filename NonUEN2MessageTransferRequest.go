@@ -1,15 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"strconv"
-
+	"github.com/free5gc/openapi/Namf_Communication"
 	"github.com/free5gc/openapi/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,113 +15,110 @@ import (
 
 func transfer(m map[string]string) {
 	// Specify the URL you want to send the request to
-	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/transfer/"
 
 	// Create the request body
+	test := models.N2InformationTransferReqData{}
 	message := models.NonUeN2MessageTransferRequest{}
 	jsonString := []byte(`{
-		"jsonData": {
-		  "taiList": [
-			{
-			  "tac": "",
-			  "plmnId": {
-				"mnc": "",
-				"mcc": ""
-			  }
+		"taiList": [
+		  {
+			"tac": "sdf",
+			"plmnId": {
+			  "mnc": "sdf",
+			  "mcc": "sdf"
 			}
-		  ],
-		  "ratSelector": "PWS",
-		  "ecgiList": [
-			{
-			  "eutraCellId": "",
-			  "plmnId": {
-				"mnc": "",
-				"mcc": ""
-			  }
+		  }
+		],
+		"ratSelector": "PWS",
+		"ecgiList": [
+		  {
+			"eutraCellId": "sdf",
+			"plmnId": {
+			  "mnc": "sdf",
+			  "mcc": "sdf"
 			}
-		  ],
-		  "ncgiList": [
-			{
-			  "nrCellId": "",
-			  "plmnId": {
-				"mnc": "",
-				"mcc": ""
-			  }
+		  }
+		],
+		"ncgiList": [
+		  {
+			"nrCellId": "sdf",
+			"plmnId": {
+			  "mnc": "",
+			  "mcc": ""
 			}
-		  ],
-		  "globalRanNodeList": [
-			{
-			  "gNbId": {
-				"bitLength": 24,
-				"gNBValue": ""
+		  }
+		],
+		"globalRanNodeList": [
+		  {
+			"gNbId": {
+			  "bitLength": 24,
+			  "gNBValue": ""
+			},
+			"plmnId": {
+			  "mnc": "",
+			  "mcc": ""
+			},
+			"n3IwfId": "",
+			"ngeNbId": ""
+		  }
+		],
+		"n2Information": {
+		  "n2InformationClass": "PWS",
+		  "smInfo": {
+			"subjectToHo": false,
+			"pduSessionId": 29,
+			"n2InfoContent": {
+			  "ngapData": {
+				"contentId": "contentId"
 			  },
-			  "plmnId": {
-				"mnc": "",
-				"mcc": ""
-			  },
-			  "n3IwfId": "",
-			  "ngeNbId": ""
+			  "ngapIeType": "",
+			  "ngapMessageType": 32
+			},
+			"sNssai": {
+			  "sd": "sd",
+			  "sst": 32
 			}
-		  ],
-		  "n2Information": {
-			"n2InformationClass": "",
-			"smInfo": {
-			  "subjectToHo": false,
-			  "pduSessionId": 29,
+		  },
+		  "ranInfo": {
+			"n2InfoContent": {
+			  "ngapData": {
+				"contentId": "contentId"
+			  },
+			  "ngapIeType": "",
+			  "ngapMessageType": 32
+			}
+		  },
+		  "nrppaInfo": {
+			"nfId": "nfId",
+			"nrppaPdu": {
 			  "n2InfoContent": {
 				"ngapData": {
 				  "contentId": "contentId"
 				},
 				"ngapIeType": "",
 				"ngapMessageType": 32
-			  },
-			  "sNssai": {
-				"sd": "sd",
-				"sst": 32
-			  }
-			},
-			"ranInfo": {
-			  "n2InfoContent": {
-				"ngapData": {
-				  "contentId": "contentId"
-				},
-				"ngapIeType": "",
-				"ngapMessageType": 32
-			  }
-			},
-			"nrppaInfo": {
-			  "nfId": "nfId",
-			  "nrppaPdu": {
-				"n2InfoContent": {
-				  "ngapData": {
-					"contentId": "contentId"
-				  },
-				  "ngapIeType": "",
-				  "ngapMessageType": 32
-				}
-			  }
-			},
-			"pwsInfo": {
-			  "messageIdentifier": 0,
-			  "serialNumber": 0,
-			  "pwsContainer": {
-				"n2InfoContent": {
-				  "ngapData": {
-					"contentId": "contentId"
-				  },
-				  "ngapIeType": "",
-				  "ngapMessageType": 51
-				},
-				"sendRanResponse": true,
-				"omcId": true
 			  }
 			}
 		  },
-		  "supportedFeatures": ""
-		}
-	  }`)
-	BinaryDataN2Information := []byte(`
-	{
+		  "pwsInfo": {
+			"messageIdentifier": 0,
+			"serialNumber": 0,
+			"pwsContainer": {
+			  "ngapData": {
+				"contentId": "n2msg"
+			  },
+			  "ngapIeType": "",
+			  "ngapMessageType": 51
+			},
+			"sendRanResponse": true,
+			"omcId": true
+		  }
+		},
+		"supportedFeatures": ""
+	  }
+	  `)
+	  BinaryDataN2Information := []byte(`
+	  {
 		"messageType": "",
 		"messageIdentifier": "",
 		"serialNumber": "",
@@ -138,7 +132,9 @@ func transfer(m map[string]string) {
 		"concurrentWarningMessageIndicator": "",
 		"warningAreaCoordinates": ""
 	}`)
-	json.Unmarshal(jsonString, &message)
+	json.Unmarshal(jsonString, &test)
+	fmt.Println(&test)
+	message.JsonData = &test
 	if m["ratSelector"] == "NR" {
 		message.JsonData.RatSelector = models.RatSelector_NR
 	}
@@ -157,24 +153,20 @@ func transfer(m map[string]string) {
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = m["mcc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = m["mnc"]
 	(*&message.BinaryDataN2Information) = BinaryDataN2Information
+	fmt.Println(BinaryDataN2Information)
+	
 	jsonString, err = json.Marshal(message)
+	namfConfiguration := Namf_Communication.NewConfiguration()
+	namfConfiguration.SetBasePath("http://127.0.0.18:8000")
+	fmt.Println(namfConfiguration.BasePath())
+	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
+	rep, res, err := apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
 	insertToDatabase(message)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
-	req.Header.Set("Content-Type", "multipart/related")
-	client := &http.Client{}
-	response, err := client.Do(req)
+	fmt.Println(rep)
+	fmt.Println(res)
 	if err != nil {
-		fmt.Printf("Error sending request: %s\n", err)
-		return
+		log.Fatal(err)
 	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		fmt.Printf("Error reading response: %s\n", err)
-		return
-	}
-	fmt.Println(string(body))
 }
 
 func insertToDatabase(message models.NonUeN2MessageTransferRequest) {

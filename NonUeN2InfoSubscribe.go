@@ -1,17 +1,18 @@
 package main
 
 import (
-	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
-	"net/http"
 	"io/ioutil"
+
+	"github.com/free5gc/openapi/Namf_Communication"
+	"github.com/free5gc/openapi/models"
 )
 
 func subscribe() {
+	subscribe := models.NonUeN2InfoSubscriptionCreateData{}
 	// Specify the URL you want to send the request to
-	url := "http://127.0.0.18:8000/namf-comm/v1/non-ue-n2-messages/subscriptions"
-
-
 	// Create the request body
 	jsonString := []byte(`{
 		"globalRanNodeList": [
@@ -36,19 +37,14 @@ func subscribe() {
 		"nfId": "",
 		"supportedFeatures": ""
 	  }`)
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
-    req.Header.Set("X-Custom-Header", "myvalue")
-    req.Header.Set("Content-Type", "application/json")
-    client := &http.Client{}
-    response, err := client.Do(req)
-	if err != nil {
-		fmt.Printf("Error sending request: %s\n", err)
-		return
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
+	  json.Unmarshal(jsonString, &subscribe)
+	  namfConfiguration := Namf_Communication.NewConfiguration()
+	  namfConfiguration.SetBasePath("http://127.0.0.18:8000")
+	  fmt.Println(namfConfiguration.BasePath())
+	  apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
+	  rep, res, err := apiClient.NonUEN2MessagesSubscriptionsCollectionDocumentApi.NonUeN2InfoSubscribe(context.TODO(), subscribe)
+	  body, err := ioutil.ReadAll(res.Body)
+	  fmt.Println(rep)
 	if err != nil {
 		fmt.Printf("Error reading response: %s\n", err)
 		return
