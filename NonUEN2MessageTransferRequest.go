@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
+
 	"github.com/free5gc/openapi/Namf_Communication"
 	"github.com/free5gc/openapi/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,31 +19,31 @@ func transfer(m map[string]string) {
 	// Specify the URL you want to send the request to
 
 	// Create the request body
-	test := models.N2InformationTransferReqData{}
+	reqData := models.N2InformationTransferReqData{}
 	message := models.NonUeN2MessageTransferRequest{}
 	jsonString := []byte(`{
 		"taiList": [
 		  {
-			"tac": "sdf",
+			"tac": "",
 			"plmnId": {
-			  "mnc": "sdf",
-			  "mcc": "sdf"
+			  "mnc": "",
+			  "mcc": ""
 			}
 		  }
 		],
 		"ratSelector": "PWS",
 		"ecgiList": [
 		  {
-			"eutraCellId": "sdf",
+			"eutraCellId": "",
 			"plmnId": {
-			  "mnc": "sdf",
-			  "mcc": "sdf"
+			  "mnc": "",
+			  "mcc": ""
 			}
 		  }
 		],
 		"ncgiList": [
 		  {
-			"nrCellId": "sdf",
+			"nrCellId": "",
 			"plmnId": {
 			  "mnc": "",
 			  "mcc": ""
@@ -117,9 +119,7 @@ func transfer(m map[string]string) {
 		"supportedFeatures": ""
 	  }
 	  `)
-	  BinaryDataN2Information := []byte(`
-	  {
-		"messageType": "",
+	BinaryDataN2informationString := `"messageType": "",
 		"messageIdentifier": "",
 		"serialNumber": "",
 		"warningAreaList": "",
@@ -131,10 +131,17 @@ func transfer(m map[string]string) {
 		"warningMessageContents" : "",
 		"concurrentWarningMessageIndicator": "",
 		"warningAreaCoordinates": ""
-	}`)
-	json.Unmarshal(jsonString, &test)
-	fmt.Println(&test)
-	message.JsonData = &test
+		`
+	BinaryDataN2InformationKeyValue := make(map[string]interface{})
+	json.Unmarshal([]byte(BinaryDataN2informationString), &BinaryDataN2InformationKeyValue)
+	BinaryDataN2InformationKeyValue["messageIdentifier"] = "1112"
+	BinaryDataN2InformationKeyValue["serialNumber"] = "5940"
+	BinaryDataN2InformationKeyValue["repetitionPeriod"] = m["repetitionPeriod"]
+	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = m["numberOfBroadcastsRequested"]
+	BinaryDataN2InformationKeyValue["dataCodingScheme"] = "01"
+	BinaryDataN2InformationKeyValue["warningMessageContents"] = time.Now().Format("2006-01-02 15:04:05") + ":" + m["warningMessageContents"]
+	json.Unmarshal(jsonString, &reqData)
+	message.JsonData = &reqData
 	if m["ratSelector"] == "NR" {
 		message.JsonData.RatSelector = models.RatSelector_NR
 	}
@@ -152,15 +159,14 @@ func transfer(m map[string]string) {
 	(*message.JsonData.NcgiList)[0].PlmnId.Mnc = m["mnc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = m["mcc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = m["mnc"]
-	(*&message.BinaryDataN2Information) = BinaryDataN2Information
-	fmt.Println(BinaryDataN2Information)
-	
+	(*&message.BinaryDataN2Information), err = json.Marshal(BinaryDataN2InformationKeyValue)
 	jsonString, err = json.Marshal(message)
 	namfConfiguration := Namf_Communication.NewConfiguration()
 	namfConfiguration.SetBasePath("http://127.0.0.18:8000")
 	fmt.Println(namfConfiguration.BasePath())
 	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
 	rep, res, err := apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
+	subscribe()
 	insertToDatabase(message)
 	fmt.Println(rep)
 	fmt.Println(res)

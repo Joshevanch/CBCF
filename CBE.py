@@ -8,6 +8,9 @@ parser.add_argument('-n2', '--n2InformationClass', type=str, help='Enumeration t
 parser.add_argument('-t', '--tac', type=str, help='Parameter 1', default = '')
 parser.add_argument('-mn', '--mnc', type=int, help='Mobile Network Code')
 parser.add_argument('-mc', '--mcc', type=int, help='Mobile Country Code')
+parser.add_argument('-r', '--repetitionPeriod', type=int, help='Repetition Period', required = True)
+parser.add_argument('-n', '--numberOfBroadcastsRequested', type=int, help='Number of Broadcast Requested', required = True)
+parser.add_argument('-m', '--warningMessageContents', type=str, help='Warning Message Contents', required = True)
 
 args = parser.parse_args()
 
@@ -18,7 +21,10 @@ data = {
     'n2Information': args.n2InformationClass,
     'tac': args.tac,
     'mnc': args.mnc,
-    'mcc': args.mcc
+    'mcc': args.mcc,
+    'repetitionPeriod': args.repetitionPeriod,
+    'numberOfBroadcastsRequested': args.numberOfBroadcastsRequested,
+    'warningMessageContents': args.warningMessageContents
 }
 
 # Send the HTTP request

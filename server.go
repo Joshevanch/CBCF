@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"io/ioutil"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
 
 func main() {
@@ -29,6 +29,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	mnc := r.Form.Get("mnc")
 	mcc := r.Form.Get("mcc")
 	n2Information := r.Form.Get("n2Information")
+	repetitionPeriod := r.Form.Get("repetitionPeriod")
+	numberOfBroadcastsRequested := r.Form.Get("numberOfBroadcastsRequested")
+	warningMessageContents := r.Form.Get("warningMessageContents")
+
 	flag.Parse()
 	m := make(map[string]string)
 	m["ratSelector"] = ratSelector
@@ -37,7 +41,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	m["mnc"] = mnc
 	m["mcc"] = mcc
 	m["n2Information"] = n2Information
-	subscribe()
+	m["repetitionPeriod"] = repetitionPeriod
+	m["numberOfBroadcastsRequested"] = numberOfBroadcastsRequested
+	m["warningMessageContents"] = warningMessageContents
 	transfer(m)
 }
 
