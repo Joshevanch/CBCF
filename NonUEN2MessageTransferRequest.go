@@ -166,7 +166,6 @@ func transfer(m map[string]string) {
 	fmt.Println(namfConfiguration.BasePath())
 	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
 	rep, res, err := apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
-	subscribe()
 	insertToDatabase(message)
 	fmt.Println(rep)
 	fmt.Println(res)

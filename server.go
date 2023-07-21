@@ -44,6 +44,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	m["repetitionPeriod"] = repetitionPeriod
 	m["numberOfBroadcastsRequested"] = numberOfBroadcastsRequested
 	m["warningMessageContents"] = warningMessageContents
+	subscribe()
 	transfer(m)
 }
 
