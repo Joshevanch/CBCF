@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"time"
 
 	"github.com/free5gc/openapi/Namf_Communication"
 	"github.com/free5gc/openapi/models"
@@ -15,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func transfer(m map[string]string) {
+func transfer(data map[string]string) {
 	// Specify the URL you want to send the request to
 
 	// Create the request body
@@ -134,31 +133,31 @@ func transfer(m map[string]string) {
 		`
 	BinaryDataN2InformationKeyValue := make(map[string]interface{})
 	json.Unmarshal([]byte(BinaryDataN2informationString), &BinaryDataN2InformationKeyValue)
-	BinaryDataN2InformationKeyValue["messageIdentifier"] = "1112"
-	BinaryDataN2InformationKeyValue["serialNumber"] = "5940"
-	BinaryDataN2InformationKeyValue["repetitionPeriod"] = m["repetitionPeriod"]
-	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = m["numberOfBroadcastsRequested"]
-	BinaryDataN2InformationKeyValue["dataCodingScheme"] = "01"
-	BinaryDataN2InformationKeyValue["warningMessageContents"] = time.Now().Format("2006-01-02 15:04:05") + ":" + m["warningMessageContents"]
+	BinaryDataN2InformationKeyValue["messageIdentifier"] = data["messageIdentifier"]
+	BinaryDataN2InformationKeyValue["serialNumber"] = data["serialNumber"]
+	BinaryDataN2InformationKeyValue["repetitionPeriod"] = "3"
+	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = "240"
+	BinaryDataN2InformationKeyValue["dataCodingScheme"] = data["dataCodingScheme"]
+	BinaryDataN2InformationKeyValue["warningMessageContents"] = data["warningMessageContents"]
 	json.Unmarshal(jsonString, &reqData)
 	message.JsonData = &reqData
-	if m["ratSelector"] == "NR" {
+	if data["ratSelector"] == "NR" {
 		message.JsonData.RatSelector = models.RatSelector_NR
 	}
-	if m["ratSelector"] == "E-UTRA" {
+	if data["ratSelector"] == "E-UTRA" {
 		message.JsonData.RatSelector = models.RatSelector_E_UTRA
 	}
-	id, err := strconv.ParseInt(m["id"], 10, 32)
+	id, err := strconv.ParseInt(data["id"], 10, 32)
 	(*&message.JsonData.N2Information.PwsInfo.MessageIdentifier) = int32(id)
-	(*message.JsonData.TaiList)[0].PlmnId.Mcc = m["mcc"]
-	(*message.JsonData.TaiList)[0].PlmnId.Mnc = m["mnc"]
-	(*message.JsonData.TaiList)[0].Tac = m["tac"]
-	(*message.JsonData.EcgiList)[0].PlmnId.Mcc = m["mcc"]
-	(*message.JsonData.EcgiList)[0].PlmnId.Mnc = m["mnc"]
-	(*message.JsonData.NcgiList)[0].PlmnId.Mcc = m["mcc"]
-	(*message.JsonData.NcgiList)[0].PlmnId.Mnc = m["mnc"]
-	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = m["mcc"]
-	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = m["mnc"]
+	(*message.JsonData.TaiList)[0].PlmnId.Mcc = data["mcc"]
+	(*message.JsonData.TaiList)[0].PlmnId.Mnc = data["mnc"]
+	(*message.JsonData.TaiList)[0].Tac = data["tac"]
+	(*message.JsonData.EcgiList)[0].PlmnId.Mcc = data["mcc"]
+	(*message.JsonData.EcgiList)[0].PlmnId.Mnc = data["mnc"]
+	(*message.JsonData.NcgiList)[0].PlmnId.Mcc = data["mcc"]
+	(*message.JsonData.NcgiList)[0].PlmnId.Mnc = data["mnc"]
+	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = data["mcc"]
+	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = data["mnc"]
 	(*&message.BinaryDataN2Information), err = json.Marshal(BinaryDataN2InformationKeyValue)
 	jsonString, err = json.Marshal(message)
 	namfConfiguration := Namf_Communication.NewConfiguration()

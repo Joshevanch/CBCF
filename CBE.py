@@ -1,38 +1,59 @@
 import requests
-import argparse
 
-parser = argparse.ArgumentParser(description='The parameter for the CBS message')
-parser.add_argument('-id', '--messageId', type=int, help='The message ID', required = True)
-parser.add_argument('-rs', '--ratSelector', type=str, help='Enumeration to choose between E-UTRA (4G) and NG (5G), the default is 5G', choices=['E-UTRA', 'NR'],  default='NR')
-parser.add_argument('-n2', '--n2InformationClass', type=str, help='Enumeration to choose between class of the N2 message, it can be PWS, SM, RAN, NRPPa, PWS-BCAL, the default is PWS', choices=['PWS', 'SM', 'RAN', 'NRPPa', 'PWS-BCAL'],  default='PWS')
-parser.add_argument('-t', '--tac', type=str, help='Parameter 1', default = '')
-parser.add_argument('-mn', '--mnc', type=int, help='Mobile Network Code')
-parser.add_argument('-mc', '--mcc', type=int, help='Mobile Country Code')
-parser.add_argument('-r', '--repetitionPeriod', type=int, help='Repetition Period', required = True)
-parser.add_argument('-n', '--numberOfBroadcastsRequested', type=int, help='Number of Broadcast Requested', required = True)
-parser.add_argument('-m', '--warningMessageContents', type=str, help='Warning Message Contents', required = True)
+def send_xml_data(url, xml_data):
+    headers = {
+        "Content-Type": "application/xml ;charset=utf-8",
+    }
+    
+    try:
+        response = requests.post(url, data=xml_data, headers=headers)
+        response.raise_for_status()
+        return response.content
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return None
 
-args = parser.parse_args()
+# Example XML data
+xml_data = """
+<?xml version="1.0" encoding="UTF-8"?> 
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.1">
+    <identifier>CWB-EQ112214</identifier> 
+    <sender>cwb@scman.cwb.gov.tw</sender> 
+    <sent>2023-07-27T00:08:00+08:00</sent> 
+    <status>Actual</status> 
+    <msgType>Alert</msgType>
+    <source>CWB</source>
+    <scope>Public</scope> 
+    <info> 
+        <language>zh-TW</language>
+        <category>Met</category>
+        <event>地震</event>
+        <responseType>Shelter</responseType>
+        <urgency>Immediate</urgency>
+        <severity>Severe</severity>
+        <certainty>Observed</certainty>
+        <effective>2023-07-27T08:00:00+08:00</effective>
+        <expires>2023-07-27T08:08:00+08:00</expires> 
+        <senderName>中央氣象局</senderName> 
+        <headline>地震報告</headline> 
+        <description> 07/27-18:11 花蓮縣秀林鄉發生規模 5.3 有感地震，最大震度花蓮縣太魯閣、宜蘭縣南山、南投縣合歡山、臺中市德基 4 級。</description>
+        <contact>123456</contact>  
+        <area> 
+            <areaDesc>最大震度 3 級地區</areaDesc> 
+            <geoCode>10002</geoCode> 
+        </area> 
+        </info> 
+    </alert>
+"""
 
-# Prepare the parameters
-data = {
-    'id': args.messageId,
-    'ratSelector': args.ratSelector,
-    'n2Information': args.n2InformationClass,
-    'tac': args.tac,
-    'mnc': args.mnc,
-    'mcc': args.mcc,
-    'repetitionPeriod': args.repetitionPeriod,
-    'numberOfBroadcastsRequested': args.numberOfBroadcastsRequested,
-    'warningMessageContents': args.warningMessageContents
-}
+# Example URL to which you want to send the XML data
+url = 'http://127.0.0.1:8080'
+encoded_xml_data = xml_data.encode('utf-8')
 
-# Send the HTTP request
-response = requests.post('http://127.0.0.1:8080/', data=data)
-
-# Check the response status code
-if response.status_code == requests.codes.ok:
-    print('Request was successful.')
-    print('Response:', response.text)
+# Sending the XML data and getting the response
+response_content = send_xml_data(url, encoded_xml_data)
+if response_content:
+    print("Response:")
+    print(response_content)
 else:
-    print('Request failed with status code:', response.status_code)
+    print("Failed to send XML data.")
