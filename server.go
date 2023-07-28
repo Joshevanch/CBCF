@@ -62,6 +62,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing body data", http.StatusBadRequest)
 		return
 	}
+	taiwanTimezone, err := time.LoadLocation("Asia/Taipei")
+	currentTime := time.Now().In(taiwanTimezone)
+	fmt.Println("Time received data: ", currentTime.Format("2006-01-02 15:04:05"))
 	var alertData Alert
 	if err := xml.Unmarshal(xmlData, &alertData); err != nil {
 		fmt.Println(err)
@@ -80,7 +83,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	serialNumberBits = "11" + serialNumberBits + "0000"
 	serialNumber, err = strconv.ParseInt(serialNumberBits, 2, 64)
 	data["serialNumber"] = fmt.Sprintf("%x", serialNumber)
-	fmt.Println(data["serialNumber"])
 	data["messageType"] = alertData.MsgType
 	if alertData.Info.Language == "en-US" {
 		data["dataCodingScheme"] = "01"

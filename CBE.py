@@ -1,21 +1,8 @@
 import requests
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone, timedelta
 
-def send_xml_data(url, xml_data):
-    headers = {
-        "Content-Type": "application/xml ;charset=utf-8",
-    }
-    
-    try:
-        response = requests.post(url, data=xml_data, headers=headers)
-        response.raise_for_status()
-        return response.content
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        return None
-
-# Example XML data
-xml_data = """
-<?xml version="1.0" encoding="UTF-8"?> 
+xml_data = """<?xml version="1.0" encoding="UTF-8"?> 
 <alert xmlns="urn:oasis:names:tc:emergency:cap:1.1">
     <identifier>CWB-EQ112214</identifier> 
     <sender>cwb@scman.cwb.gov.tw</sender> 
@@ -45,13 +32,34 @@ xml_data = """
         </info> 
     </alert>
 """
+root = ET.fromstring(xml_data)
+effective_element = root.find('.//{urn:oasis:names:tc:emergency:cap:1.1}effective')
+if effective_element is not None:
+            current_time_utc = datetime.now(timezone.utc)
+            taiwan_timezone = timezone(timedelta(hours=8))
+            taiwan_time = current_time_utc.astimezone(taiwan_timezone)
+            formatted_time = taiwan_time.replace(microsecond=0).isoformat()
+            effective_element.text = formatted_time
+modified_xml_string = ET.tostring(root, encoding='utf-8', method='xml')
 
-# Example URL to which you want to send the XML data
+
+def send_xml_data(url, xml_data):
+    headers = {
+        "Content-Type": "application/xml ;charset=utf-8",
+    }
+    
+    try:
+        response = requests.post(url, data=xml_data, headers=headers)
+        response.raise_for_status()
+        return response.content
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return None
+
 url = 'http://127.0.0.1:8080'
-encoded_xml_data = xml_data.encode('utf-8')
 
-# Sending the XML data and getting the response
-response_content = send_xml_data(url, encoded_xml_data)
+response_content = send_xml_data(url, modified_xml_string)
+print("Data send at", formatted_time)
 if response_content:
     print("Response:")
     print(response_content)

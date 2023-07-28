@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/free5gc/openapi/Namf_Communication"
 	"github.com/free5gc/openapi/models"
@@ -162,12 +163,14 @@ func transfer(data map[string]string) {
 	jsonString, err = json.Marshal(message)
 	namfConfiguration := Namf_Communication.NewConfiguration()
 	namfConfiguration.SetBasePath("http://127.0.0.18:8000")
-	fmt.Println(namfConfiguration.BasePath())
 	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
 	rep, res, err := apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
+	taiwanTimezone, err := time.LoadLocation("Asia/Taipei")
+	currentTime := time.Now().In(taiwanTimezone)
+	fmt.Println("Time Data sent: ", currentTime.Format("2006-01-02 15:04:05"))
 	insertToDatabase(message)
-	fmt.Println(rep)
-	fmt.Println(res)
+	fmt.Println("Response: ", res)
+	fmt.Println("Response: ", rep)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -194,8 +197,4 @@ func insertToDatabase(message models.NonUeN2MessageTransferRequest) {
 	sort := options.FindOne().SetSort(bson.D{{"_id", -1}})
 	var result models.NonUeN2MessageTransferRequest
 	err = collection.FindOne(context.TODO(), bson.D{}, sort).Decode(&result)
-	var b []byte
-	b, err = json.Marshal(result)
-	fmt.Println(string(b))
-
 }
