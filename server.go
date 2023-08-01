@@ -110,7 +110,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	default:
 		data["messageIdentifier"] = "1112"
 	}
-	data["warningMessageContents"] = alertData.Sent.Format("2006-01-02 15:04:05") + alertData.Info.Headline + "\n" + alertData.Info.Description + "\n" + alertData.Info.Area.AreaDesc
+	data["warningMessageContents"] = currentTime.Format("2006-01-02 15:04:05") + alertData.Info.Headline + "\n" + alertData.Info.Description + "\n" + alertData.Info.Area.AreaDesc
 	data["tac"] = alertData.Info.Area.GeoCode
 	subscribe()
 	transfer(data)
