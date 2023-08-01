@@ -33,15 +33,18 @@ xml_data = """<?xml version="1.0" encoding="UTF-8"?>
     </alert>
 """
 root = ET.fromstring(xml_data)
+current_time_utc = datetime.now(timezone.utc)
+taiwan_timezone = timezone(timedelta(hours=8))
+taiwan_time = current_time_utc.astimezone(taiwan_timezone) 
+formatted_time = taiwan_time.replace(microsecond=0).isoformat()
 effective_element = root.find('.//{urn:oasis:names:tc:emergency:cap:1.1}effective')
 if effective_element is not None:
-            current_time_utc = datetime.now(timezone.utc)
-            taiwan_timezone = timezone(timedelta(hours=8))
-            taiwan_time = current_time_utc.astimezone(taiwan_timezone)
-            formatted_time = taiwan_time.replace(microsecond=0).isoformat()
             effective_element.text = formatted_time
+sent_element = root.find('.//{urn:oasis:names:tc:emergency:cap:1.1}sent')
+if sent_element is not None:
+            sent_element.text = formatted_time
 modified_xml_string = ET.tostring(root, encoding='utf-8', method='xml')
-
+print (sent_element.text)
 
 def send_xml_data(url, xml_data):
     headers = {
