@@ -77,10 +77,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	serialNumberInteger, err := strconv.Atoi(alertData.Identifier[len(alertData.Identifier)-3:])
 	serialNumber := int64(serialNumberInteger)
 	serialNumberBits := strconv.FormatInt(int64(serialNumber), 2)
-	for len(serialNumberBits) < 10 {
-		serialNumberBits = "0" + serialNumberBits
-	}
-	serialNumberBits = "11" + serialNumberBits + "0000"
+	serialNumberBits = "01" + "01" + serialNumberBits + "0000"
 	serialNumber, err = strconv.ParseInt(serialNumberBits, 2, 64)
 	data["serialNumber"] = fmt.Sprintf("%x", serialNumber)
 	data["messageType"] = alertData.MsgType
