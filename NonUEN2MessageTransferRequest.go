@@ -136,8 +136,8 @@ func transfer(data map[string]string) {
 	json.Unmarshal([]byte(BinaryDataN2informationString), &BinaryDataN2InformationKeyValue)
 	BinaryDataN2InformationKeyValue["messageIdentifier"] = data["messageIdentifier"]
 	BinaryDataN2InformationKeyValue["serialNumber"] = data["serialNumber"]
-	BinaryDataN2InformationKeyValue["repetitionPeriod"] = "3"
-	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = "240"
+	BinaryDataN2InformationKeyValue["repetitionPeriod"] = "240"
+	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = "3"
 	BinaryDataN2InformationKeyValue["dataCodingScheme"] = data["dataCodingScheme"]
 	BinaryDataN2InformationKeyValue["warningMessageContents"] = data["warningMessageContents"]
 	json.Unmarshal(jsonString, &reqData)
