@@ -19,6 +19,7 @@ func transfer(data map[string]string) {
 	// Specify the URL you want to send the request to
 
 	// Create the request body
+	var err error
 	reqData := models.N2InformationTransferReqData{}
 	message := models.NonUeN2MessageTransferRequest{}
 	jsonString := []byte(`{
@@ -135,7 +136,6 @@ func transfer(data map[string]string) {
 	BinaryDataN2InformationKeyValue := make(map[string]interface{})
 	json.Unmarshal([]byte(BinaryDataN2informationString), &BinaryDataN2InformationKeyValue)
 	BinaryDataN2InformationKeyValue["messageIdentifier"] = data["messageIdentifier"]
-	BinaryDataN2InformationKeyValue["serialNumber"] = data["serialNumber"]
 	BinaryDataN2InformationKeyValue["repetitionPeriod"] = "240"
 	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = "3"
 	BinaryDataN2InformationKeyValue["dataCodingScheme"] = data["dataCodingScheme"]
@@ -148,8 +148,6 @@ func transfer(data map[string]string) {
 	if data["ratSelector"] == "E-UTRA" {
 		message.JsonData.RatSelector = models.RatSelector_E_UTRA
 	}
-	id, err := strconv.ParseInt(data["id"], 10, 32)
-	(*&message.JsonData.N2Information.PwsInfo.MessageIdentifier) = int32(id)
 	(*message.JsonData.TaiList)[0].PlmnId.Mcc = data["mcc"]
 	(*message.JsonData.TaiList)[0].PlmnId.Mnc = data["mnc"]
 	(*message.JsonData.TaiList)[0].Tac = data["tac"]
@@ -159,8 +157,29 @@ func transfer(data map[string]string) {
 	(*message.JsonData.NcgiList)[0].PlmnId.Mnc = data["mnc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = data["mcc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = data["mnc"]
+
+	countNumber := getFromDatabase(data["messageIdentifier"], data["serialNumber"])
+	var serialNumber int64
+	fmt.Println(countNumber)
+	if countNumber >= 0 {
+		serialNumberInteger, err := strconv.Atoi(data["serialNumber"])
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(data["serialNumber"])
+		serialNumberBits := "01" + "00" + fmt.Sprintf("%08b", serialNumberInteger) + fmt.Sprintf("%04b", countNumber)
+		fmt.Println(serialNumberBits)
+		serialNumber, err = strconv.ParseInt(serialNumberBits, 2, 64)
+	}
+	serialNumber64, err := strconv.Atoi(data["serialNumber"])
+	message.JsonData.N2Information.PwsInfo.SerialNumber = int32(serialNumber64)
+	messageIdentifier, err := strconv.Atoi(data["messageIdentifier"])
+	message.JsonData.N2Information.PwsInfo.MessageIdentifier = int32(messageIdentifier)
+	BinaryDataN2InformationKeyValue["serialNumber"] = fmt.Sprintf("%x", serialNumber)
 	(*&message.BinaryDataN2Information), err = json.Marshal(BinaryDataN2InformationKeyValue)
 	jsonString, err = json.Marshal(message)
+	insertToDatabase(message)
+	message.JsonData.N2Information.PwsInfo.SerialNumber = int32(serialNumber)
 	namfConfiguration := Namf_Communication.NewConfiguration()
 	namfConfiguration.SetBasePath("http://127.0.0.18:8000")
 	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
@@ -168,7 +187,6 @@ func transfer(data map[string]string) {
 	taiwanTimezone, err := time.LoadLocation("Asia/Taipei")
 	currentTime := time.Now().In(taiwanTimezone)
 	fmt.Println("Time Data sent: ", currentTime.Format("2006-01-02 15:04:05"))
-	insertToDatabase(message)
 	fmt.Println("Response: ", res)
 	fmt.Println("Response: ", rep)
 	if err != nil {
@@ -197,4 +215,22 @@ func insertToDatabase(message models.NonUeN2MessageTransferRequest) {
 	sort := options.FindOne().SetSort(bson.D{{"_id", -1}})
 	var result models.NonUeN2MessageTransferRequest
 	err = collection.FindOne(context.TODO(), bson.D{}, sort).Decode(&result)
+}
+
+func getFromDatabase(messageIdentifier string, serialNumber string) int64 {
+	messageIdentifierint, err := strconv.Atoi(messageIdentifier)
+	serialNumberint, err := strconv.Atoi(serialNumber)
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.Connect(context.Background(), clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+	collection := client.Database("local").Collection("cbcf")
+	var result int64
+	condition := bson.M{"jsondata.n2information.pwsinfo.messageidentifier": messageIdentifierint, "jsondata.n2information.pwsinfo.serialnumber": serialNumberint}
+	result, err = collection.CountDocuments(context.Background(), condition)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return result
 }

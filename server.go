@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -74,12 +73,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("XML data received successfully"))
 	data := make(map[string]string)
-	serialNumberInteger, err := strconv.Atoi(alertData.Identifier[len(alertData.Identifier)-3:])
-	serialNumber := int64(serialNumberInteger)
-	serialNumberBits := strconv.FormatInt(int64(serialNumber), 2)
-	serialNumberBits = "01" + "01" + serialNumberBits + "0000"
-	serialNumber, err = strconv.ParseInt(serialNumberBits, 2, 64)
-	data["serialNumber"] = fmt.Sprintf("%x", serialNumber)
+	data["serialNumber"] = alertData.Identifier[len(alertData.Identifier)-3:]
 	data["messageType"] = alertData.MsgType
 	if alertData.Info.Language == "en-US" {
 		data["dataCodingScheme"] = "01"

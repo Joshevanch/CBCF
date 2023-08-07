@@ -1,10 +1,13 @@
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
+import argparse
 
+parser = argparse.ArgumentParser(description='The parameter for the CBS message')
+parser.add_argument('-sn', '--serialNumber', type=int, help='The message ID', required = True)
 xml_data = """<?xml version="1.0" encoding="UTF-8"?> 
 <alert xmlns="urn:oasis:names:tc:emergency:cap:1.1">
-    <identifier>CWB-EQ112214</identifier> 
+    <identifier>CWB-EQ112202</identifier>  
     <sender>cwb@scman.cwb.gov.tw</sender> 
     <sent>2023-07-27T00:08:00+08:00</sent> 
     <status>Actual</status> 
@@ -32,6 +35,8 @@ xml_data = """<?xml version="1.0" encoding="UTF-8"?>
         </info> 
     </alert>
 """
+
+args = parser.parse_args()
 root = ET.fromstring(xml_data)
 current_time_utc = datetime.now(timezone.utc)
 taiwan_timezone = timezone(timedelta(hours=8))
@@ -43,6 +48,9 @@ if effective_element is not None:
 sent_element = root.find('.//{urn:oasis:names:tc:emergency:cap:1.1}sent')
 if sent_element is not None:
             sent_element.text = formatted_time
+serialNumber_element = root.find('.//{urn:oasis:names:tc:emergency:cap:1.1}identifier')
+if serialNumber_element is not None:
+            serialNumber_element.text = serialNumber_element.text[:-3] + f"{args.serialNumber:03d}"
 modified_xml_string = ET.tostring(root, encoding='utf-8', method='xml')
 print (sent_element.text)
 
