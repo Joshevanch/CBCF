@@ -11,31 +11,31 @@ import (
 
 // Define the Go struct representing the XML data
 type Alert struct {
-	XMLName    xml.Name  `xml:"urn:oasis:names:tc:emergency:cap:1.1 alert"`
-	Identifier string    `xml:"identifier"`
-	Sender     string    `xml:"sender"`
-	Sent       time.Time `xml:"sent"`
-	Status     string    `xml:"status"`
-	MsgType    string    `xml:"msgType"`
-	Scope      string    `xml:"scope"`
-	Source     string    `xml:"source"`
-	Info       Info      `xml:"info"`
+	XMLName    xml.Name `xml:"urn:oasis:names:tc:emergency:cap:1.1 alert"`
+	Identifier string   `xml:"identifier"`
+	Sender     string   `xml:"sender"`
+	Sent       string   `xml:"sent"`
+	Status     string   `xml:"status"`
+	MsgType    string   `xml:"msgType"`
+	Scope      string   `xml:"scope"`
+	Source     string   `xml:"source"`
+	Info       Info     `xml:"info"`
 }
 
 type Info struct {
-	Language     string    `xml:"language"`
-	Category     string    `xml:"category"`
-	Event        string    `xml:"event"`
-	ResponseType string    `xml:"responseType"`
-	Urgency      string    `xml:"urgency"`
-	Severity     string    `xml:"severity"`
-	Certainty    string    `xml:"certainty"`
-	Expires      time.Time `xml:"expires"`
-	SenderName   string    `xml:"senderName"`
-	Headline     string    `xml:"headline"`
-	Description  string    `xml:"description"`
-	Contact      string    `xml:"contact"`
-	Area         Area      `xml:"area"`
+	Language     string `xml:"language"`
+	Category     string `xml:"category"`
+	Event        string `xml:"event"`
+	ResponseType string `xml:"responseType"`
+	Urgency      string `xml:"urgency"`
+	Severity     string `xml:"severity"`
+	Certainty    string `xml:"certainty"`
+	Expires      string `xml:"expires"`
+	SenderName   string `xml:"senderName"`
+	Headline     string `xml:"headline"`
+	Description  string `xml:"description"`
+	Contact      string `xml:"contact"`
+	Area         Area   `xml:"area"`
 }
 
 type Area struct {
@@ -61,9 +61,10 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing body data", http.StatusBadRequest)
 		return
 	}
+	timeFormat := "2006-01-02 15:04:05.000 UTC-07:00"
 	taiwanTimezone, err := time.LoadLocation("Asia/Taipei")
 	currentTime := time.Now().In(taiwanTimezone)
-	fmt.Println("Time received data: ", currentTime.Format("2006-01-02 15:04:05"))
+	fmt.Println("Time received data: ", currentTime.Format(timeFormat))
 	var alertData Alert
 	if err := xml.Unmarshal(xmlData, &alertData); err != nil {
 		fmt.Println(err)
@@ -101,7 +102,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	default:
 		data["messageIdentifier"] = "1112"
 	}
-	data["warningMessageContents"] = alertData.Sent.Format("2006-01-02 15:04:05") + alertData.Info.Headline + "\n" + alertData.Info.Description + "\n" + alertData.Info.Area.AreaDesc
+	timeSent, err := time.Parse(alertData.Sent, timeFormat)
+	data["warningMessageContents"] = timeSent.Format(timeFormat) + alertData.Info.Headline + "\n" + alertData.Info.Description + "\n" + alertData.Info.Area.AreaDesc
 	data["tac"] = alertData.Info.Area.GeoCode
 	subscribe()
 	transfer(data)

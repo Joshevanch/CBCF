@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 import argparse
 
 parser = argparse.ArgumentParser(description='The parameter for the CBS message')
-parser.add_argument('-sn', '--serialNumber', type=int, help='The message ID', required = True)
+parser.add_argument('-id', '--messageId', type=int, help='The message ID for serial number', required = True)
 xml_data = """<?xml version="1.0" encoding="UTF-8"?> 
 <alert xmlns="urn:oasis:names:tc:emergency:cap:1.1">
     <identifier>CWB-EQ112202</identifier>  
@@ -41,7 +41,7 @@ root = ET.fromstring(xml_data)
 current_time_utc = datetime.now(timezone.utc)
 taiwan_timezone = timezone(timedelta(hours=8))
 taiwan_time = current_time_utc.astimezone(taiwan_timezone) 
-formatted_time = taiwan_time.replace(microsecond=0).isoformat()
+formatted_time = taiwan_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] + ' ' + taiwan_time.tzname()
 effective_element = root.find('.//{urn:oasis:names:tc:emergency:cap:1.1}effective')
 if effective_element is not None:
             effective_element.text = formatted_time
@@ -50,9 +50,8 @@ if sent_element is not None:
             sent_element.text = formatted_time
 serialNumber_element = root.find('.//{urn:oasis:names:tc:emergency:cap:1.1}identifier')
 if serialNumber_element is not None:
-            serialNumber_element.text = serialNumber_element.text[:-3] + f"{args.serialNumber:03d}"
+            serialNumber_element.text = serialNumber_element.text[:-3] + f"{args.messageId:03d}"
 modified_xml_string = ET.tostring(root, encoding='utf-8', method='xml')
-print (sent_element.text)
 
 def send_xml_data(url, xml_data):
     headers = {
@@ -71,8 +70,5 @@ url = 'http://127.0.0.1:8080'
 
 response_content = send_xml_data(url, modified_xml_string)
 print("Data send at", formatted_time)
-if response_content:
-    print("Response:")
-    print(response_content)
-else:
+if response_content is None:
     print("Failed to send XML data.")

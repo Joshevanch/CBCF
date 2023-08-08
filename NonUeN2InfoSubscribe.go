@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 
 	"github.com/free5gc/openapi/Namf_Communication"
 	"github.com/free5gc/openapi/models"
@@ -37,17 +35,9 @@ func subscribe() {
 		"nfId": "",
 		"supportedFeatures": ""
 	  }`)
-	  json.Unmarshal(jsonString, &subscribe)
-	  namfConfiguration := Namf_Communication.NewConfiguration()
-	  namfConfiguration.SetBasePath("http://127.0.0.18:8000")
-	  fmt.Println(namfConfiguration.BasePath())
-	  apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
-	  rep, res, err := apiClient.NonUEN2MessagesSubscriptionsCollectionDocumentApi.NonUeN2InfoSubscribe(context.TODO(), subscribe)
-	  body, err := ioutil.ReadAll(res.Body)
-	  fmt.Println(rep)
-	if err != nil {
-		fmt.Printf("Error reading response: %s\n", err)
-		return
-	}
-	fmt.Println(string(body))
+	json.Unmarshal(jsonString, &subscribe)
+	namfConfiguration := Namf_Communication.NewConfiguration()
+	namfConfiguration.SetBasePath("http://127.0.0.18:8000")
+	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
+	_, _, _ = apiClient.NonUEN2MessagesSubscriptionsCollectionDocumentApi.NonUeN2InfoSubscribe(context.TODO(), subscribe)
 }

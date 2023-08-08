@@ -137,7 +137,7 @@ func transfer(data map[string]string) {
 	json.Unmarshal([]byte(BinaryDataN2informationString), &BinaryDataN2InformationKeyValue)
 	BinaryDataN2InformationKeyValue["messageIdentifier"] = data["messageIdentifier"]
 	BinaryDataN2InformationKeyValue["repetitionPeriod"] = "240"
-	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = "3"
+	BinaryDataN2InformationKeyValue["numberOfBroadcastsRequested"] = "1"
 	BinaryDataN2InformationKeyValue["dataCodingScheme"] = data["dataCodingScheme"]
 	BinaryDataN2InformationKeyValue["warningMessageContents"] = data["warningMessageContents"]
 	json.Unmarshal(jsonString, &reqData)
@@ -158,17 +158,14 @@ func transfer(data map[string]string) {
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mcc = data["mcc"]
 	(*message.JsonData.GlobalRanNodeList)[0].PlmnId.Mnc = data["mnc"]
 
-	countNumber := getFromDatabase(data["messageIdentifier"], data["serialNumber"])
+	countNumber := countMessageFromDatabase(data["messageIdentifier"], data["serialNumber"])
 	var serialNumber int64
-	fmt.Println(countNumber)
 	if countNumber >= 0 {
 		serialNumberInteger, err := strconv.Atoi(data["serialNumber"])
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println(data["serialNumber"])
 		serialNumberBits := "01" + "00" + fmt.Sprintf("%08b", serialNumberInteger) + fmt.Sprintf("%04b", countNumber)
-		fmt.Println(serialNumberBits)
 		serialNumber, err = strconv.ParseInt(serialNumberBits, 2, 64)
 	}
 	serialNumber64, err := strconv.Atoi(data["serialNumber"])
@@ -183,12 +180,10 @@ func transfer(data map[string]string) {
 	namfConfiguration := Namf_Communication.NewConfiguration()
 	namfConfiguration.SetBasePath("http://127.0.0.18:8000")
 	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
-	rep, res, err := apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
+	_, _, err = apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
 	taiwanTimezone, err := time.LoadLocation("Asia/Taipei")
 	currentTime := time.Now().In(taiwanTimezone)
-	fmt.Println("Time Data sent: ", currentTime.Format("2006-01-02 15:04:05"))
-	fmt.Println("Response: ", res)
-	fmt.Println("Response: ", rep)
+	fmt.Println("Time Data sent: ", currentTime.Format("2006-01-02 15:04:05.000 UTC-07:00"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -204,20 +199,17 @@ func insertToDatabase(message models.NonUeN2MessageTransferRequest) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Connected to MongoDB!")
 	collection := client.Database("local").Collection("cbcf")
-	insertResult, err := collection.InsertOne(context.TODO(), message)
+	_, err = collection.InsertOne(context.TODO(), message)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Inserted document ID: %v\n", insertResult.InsertedID)
 	sort := options.FindOne().SetSort(bson.D{{"_id", -1}})
 	var result models.NonUeN2MessageTransferRequest
 	err = collection.FindOne(context.TODO(), bson.D{}, sort).Decode(&result)
 }
 
-func getFromDatabase(messageIdentifier string, serialNumber string) int64 {
+func countMessageFromDatabase(messageIdentifier string, serialNumber string) int64 {
 	messageIdentifierint, err := strconv.Atoi(messageIdentifier)
 	serialNumberint, err := strconv.Atoi(serialNumber)
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
