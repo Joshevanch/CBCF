@@ -64,7 +64,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	timeFormat := "2006-01-02 15:04:05.000 UTC-07:00"
 	taiwanTimezone, err := time.LoadLocation("Asia/Taipei")
 	currentTime := time.Now().In(taiwanTimezone)
-	fmt.Println("Time received data: ", currentTime.Format(timeFormat))
 	var alertData Alert
 	if err := xml.Unmarshal(xmlData, &alertData); err != nil {
 		fmt.Println(err)
@@ -104,7 +103,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	timeSent, err := time.Parse(alertData.Sent, timeFormat)
 	data["warningMessageContents"] = timeSent.Format(timeFormat) + alertData.Info.Headline + "\n" + alertData.Info.Description + "\n" + alertData.Info.Area.AreaDesc
+	data["timeSentFromCBE"] = alertData.Sent
 	data["tac"] = alertData.Info.Area.GeoCode
+	data["timeReceived"] = currentTime.Format(timeFormat)
 	subscribe()
 	transfer(data)
 }

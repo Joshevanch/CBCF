@@ -15,6 +15,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type MessageTimestamp struct {
+	MessageIdentifier int32     `json:"messageIdentifier"`
+	SerialNumber      int32     `json:"serialNumber"`
+	CBESentTime       time.Time `json:"cbeSentTime"`
+	CBCFReceivedTime  time.Time `json:"cbcfReceivedTime"`
+	CBCFSentTime      time.Time `json:"cbcfSentTime"`
+	DelayCBCF         string    `json:"delayCbcf"`
+}
+
 func transfer(data map[string]string) {
 	// Specify the URL you want to send the request to
 
@@ -160,36 +169,50 @@ func transfer(data map[string]string) {
 
 	countNumber := countMessageFromDatabase(data["messageIdentifier"], data["serialNumber"])
 	var serialNumber int64
+	var serialNumberInteger int
 	if countNumber >= 0 {
-		serialNumberInteger, err := strconv.Atoi(data["serialNumber"])
+		serialNumberInteger, err = strconv.Atoi(data["serialNumber"])
 		if err != nil {
 			fmt.Println(err)
 		}
 		serialNumberBits := "01" + "00" + fmt.Sprintf("%08b", serialNumberInteger) + fmt.Sprintf("%04b", countNumber)
 		serialNumber, err = strconv.ParseInt(serialNumberBits, 2, 64)
 	}
-	serialNumber64, err := strconv.Atoi(data["serialNumber"])
-	message.JsonData.N2Information.PwsInfo.SerialNumber = int32(serialNumber64)
+	message.JsonData.N2Information.PwsInfo.SerialNumber = int32(serialNumberInteger)
 	messageIdentifier, err := strconv.Atoi(data["messageIdentifier"])
 	message.JsonData.N2Information.PwsInfo.MessageIdentifier = int32(messageIdentifier)
 	BinaryDataN2InformationKeyValue["serialNumber"] = fmt.Sprintf("%x", serialNumber)
 	(*&message.BinaryDataN2Information), err = json.Marshal(BinaryDataN2InformationKeyValue)
 	jsonString, err = json.Marshal(message)
-	insertToDatabase(message)
 	message.JsonData.N2Information.PwsInfo.SerialNumber = int32(serialNumber)
 	namfConfiguration := Namf_Communication.NewConfiguration()
 	namfConfiguration.SetBasePath("http://127.0.0.18:8000")
 	apiClient := Namf_Communication.NewAPIClient(namfConfiguration)
-	_, _, err = apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
 	taiwanTimezone, err := time.LoadLocation("Asia/Taipei")
 	currentTime := time.Now().In(taiwanTimezone)
-	fmt.Println("Time Data sent: ", currentTime.Format("2006-01-02 15:04:05.000 UTC-07:00"))
+	timeReceived, err := time.Parse("2006-01-02 15:04:05.000 UTC-07:00", data["timeReceived"])
+	timeSentFromCBE, err := time.Parse("2006-01-02 15:04:05.000 UTC-07:00", data["timeSentFromCBE"])
+	fmt.Println("Time Data sent from CBE: ", timeSentFromCBE.Format("2006-01-02 15:04:05.000 UTC-07:00"))
+	fmt.Println("Time Data received: ", timeReceived.Format("2006-01-02 15:04:05.000 UTC-07:00"))
+	fmt.Println("Time Data sent to AMF: ", currentTime.Format("2006-01-02 15:04:05.000 UTC-07:00"))
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	delay := timeReceived.Sub(timeSentFromCBE)
+	messageTimestamp := MessageTimestamp{
+		MessageIdentifier: int32(messageIdentifier),
+		SerialNumber:      int32(serialNumberInteger),
+		CBESentTime:       timeSentFromCBE.UTC(),
+		CBCFReceivedTime:  timeReceived.UTC(),
+		CBCFSentTime:      currentTime.UTC(),
+		DelayCBCF:         delay.String(),
+	}
+	insertToDatabase(message, messageTimestamp)
+	_, _, err = apiClient.NonUEN2MessagesCollectionDocumentApi.NonUeN2MessageTransfer(context.TODO(), message)
 }
 
-func insertToDatabase(message models.NonUeN2MessageTransferRequest) {
+func insertToDatabase(message models.NonUeN2MessageTransferRequest, messageTimestamp MessageTimestamp) {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -200,13 +223,23 @@ func insertToDatabase(message models.NonUeN2MessageTransferRequest) {
 		log.Fatal(err)
 	}
 	collection := client.Database("local").Collection("cbcf")
-	_, err = collection.InsertOne(context.TODO(), message)
+	collectionTimestamp := client.Database("local").Collection("cbcfTimestamp")
+	_, err = collectionTimestamp.InsertOne(context.TODO(), messageTimestamp)
 	if err != nil {
 		log.Fatal(err)
 	}
-	sort := options.FindOne().SetSort(bson.D{{"_id", -1}})
-	var result models.NonUeN2MessageTransferRequest
-	err = collection.FindOne(context.TODO(), bson.D{}, sort).Decode(&result)
+	_, err = collection.InsertOne(context.Background(), message)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = client.Disconnect(context.TODO())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO optional you can log your closed MongoDB client
+	fmt.Println("Connection to MongoDB closed.")
 }
 
 func countMessageFromDatabase(messageIdentifier string, serialNumber string) int64 {
