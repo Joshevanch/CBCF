@@ -237,9 +237,6 @@ func insertToDatabase(message models.NonUeN2MessageTransferRequest, messageTimes
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// TODO optional you can log your closed MongoDB client
-	fmt.Println("Connection to MongoDB closed.")
 }
 
 func countMessageFromDatabase(messageIdentifier string, serialNumber string) int64 {

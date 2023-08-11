@@ -101,7 +101,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	default:
 		data["messageIdentifier"] = "1112"
 	}
-	timeSent, err := time.Parse(alertData.Sent, timeFormat)
+	timeSent, err := time.Parse(timeFormat, alertData.Sent)
 	data["warningMessageContents"] = timeSent.Format(timeFormat) + alertData.Info.Headline + "\n" + alertData.Info.Description + "\n" + alertData.Info.Area.AreaDesc
 	data["timeSentFromCBE"] = alertData.Sent
 	data["tac"] = alertData.Info.Area.GeoCode
